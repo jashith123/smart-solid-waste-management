@@ -63,12 +63,44 @@ export type StatusKey =
 export function statusStyle(status: string) {
   switch (status) {
     case "RESOLVED":
-      return { fg: colors.resolved, bg: colors.resolvedSoft, label: "Resolved" };
+      return {
+        fg: colors.resolved,
+        bg: colors.resolvedSoft,
+        label: "Resolved",
+        icon: "checkmark-circle" as const,
+      };
     case "IN_PROGRESS":
-      return { fg: colors.inProgress, bg: colors.inProgressSoft, label: "In Progress" };
+      return {
+        fg: colors.inProgress,
+        bg: colors.inProgressSoft,
+        label: "In Progress",
+        icon: "sync-circle" as const,
+      };
     case "REJECTED":
-      return { fg: colors.rejected, bg: colors.rejectedSoft, label: "Rejected" };
+      return {
+        fg: colors.rejected,
+        bg: colors.rejectedSoft,
+        label: "Rejected",
+        icon: "close-circle" as const,
+      };
     default:
-      return { fg: colors.pending, bg: colors.pendingSoft, label: "Pending" };
+      return {
+        fg: colors.pending,
+        bg: colors.pendingSoft,
+        label: "Pending",
+        icon: "time" as const,
+      };
   }
+}
+
+// Maps a 0..1 model confidence to a color + label band.
+export function confidenceStyle(value: number) {
+  const pct = Math.round(value * 100);
+  if (value >= 0.7) {
+    return { fg: colors.resolved, bg: colors.resolvedSoft, label: "High", pct };
+  }
+  if (value >= 0.4) {
+    return { fg: colors.pending, bg: colors.pendingSoft, label: "Medium", pct };
+  }
+  return { fg: colors.danger, bg: colors.dangerSoft, label: "Low", pct };
 }

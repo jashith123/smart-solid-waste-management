@@ -1,5 +1,7 @@
 import { View, Text, StyleSheet } from "react-native";
 
+import { Ionicons } from "@expo/vector-icons";
+
 import { radius, spacing, statusStyle } from "../theme";
 
 export default function StatusBadge({ status }: { status: string }) {
@@ -7,7 +9,7 @@ export default function StatusBadge({ status }: { status: string }) {
 
   return (
     <View style={[styles.badge, { backgroundColor: s.bg }]}>
-      <View style={[styles.dot, { backgroundColor: s.fg }]} />
+      <Ionicons name={s.icon} size={13} color={s.fg} style={styles.icon} />
       <Text style={[styles.text, { color: s.fg }]}>{s.label}</Text>
     </View>
   );
@@ -22,11 +24,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     borderRadius: radius.pill,
   },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: spacing.xs + 2,
+  icon: {
+    marginRight: spacing.xs + 1,
   },
   text: {
     fontSize: 12,
