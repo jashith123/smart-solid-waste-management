@@ -11,11 +11,13 @@ import {
 
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
+import { Ionicons } from "@expo/vector-icons";
 
 import { detectGarbage } from "../services/detectionService";
 import { DetectionResponse } from "../types/detection";
 
 import AppButton from "../components/AppButton";
+import ConfidenceBar from "../components/ConfidenceBar";
 import { colors, radius, shadow, spacing } from "../theme";
 
 export default function ReportScreen() {
@@ -99,7 +101,7 @@ export default function ReportScreen() {
           <Image source={{ uri: imageUri }} style={styles.preview} />
         ) : (
           <View style={styles.placeholder}>
-            <Text style={styles.placeholderEmoji}>🗑️</Text>
+            <Ionicons name="image-outline" size={56} color={colors.textMuted} />
             <Text style={styles.placeholderText}>No image selected</Text>
             <Text style={styles.placeholderHint}>
               Take a photo or choose one from your gallery
@@ -110,13 +112,13 @@ export default function ReportScreen() {
 
       <View style={styles.actions}>
         <View style={styles.actionHalf}>
-          <AppButton title="Camera" icon="📷" onPress={takePhoto} />
+          <AppButton title="Camera" icon="camera" onPress={takePhoto} />
         </View>
         <View style={styles.gap} />
         <View style={styles.actionHalf}>
           <AppButton
             title="Gallery"
-            icon="🖼️"
+            icon="images"
             variant="secondary"
             onPress={pickImage}
           />
@@ -126,7 +128,7 @@ export default function ReportScreen() {
       <View style={styles.submitWrap}>
         <AppButton
           title={loading ? "Analyzing…" : "Submit & Detect"}
-          icon={loading ? undefined : "🔍"}
+          icon={loading ? undefined : "scan"}
           loading={loading}
           disabled={!imageUri}
           onPress={submitReport}
@@ -144,9 +146,16 @@ export default function ReportScreen() {
             },
           ]}
         >
-          <Text style={styles.resultTitle}>
-            {result.garbage_detected ? "✅ Garbage Detected" : "⚠️ No Garbage Detected"}
-          </Text>
+          <View style={styles.resultTitleRow}>
+            <Ionicons
+              name={result.garbage_detected ? "checkmark-circle" : "alert-circle"}
+              size={24}
+              color={result.garbage_detected ? colors.resolved : colors.pending}
+            />
+            <Text style={styles.resultTitle}>
+              {result.garbage_detected ? "Garbage Detected" : "No Garbage Detected"}
+            </Text>
+          </View>
 
           <View style={styles.resultRow}>
             <View style={styles.metric}>
@@ -154,15 +163,13 @@ export default function ReportScreen() {
               <Text style={styles.metricLabel}>Items</Text>
             </View>
             <View style={styles.metric}>
-              <Text style={styles.metricValue}>
-                {(result.highest_confidence * 100).toFixed(0)}%
-              </Text>
-              <Text style={styles.metricLabel}>Confidence</Text>
-            </View>
-            <View style={styles.metric}>
               <Text style={styles.metricValue}>#{result.report_id}</Text>
               <Text style={styles.metricLabel}>Report ID</Text>
             </View>
+          </View>
+
+          <View style={styles.confidenceWrap}>
+            <ConfidenceBar value={result.highest_confidence} />
           </View>
 
           <Text style={styles.savedNote}>
@@ -198,9 +205,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: spacing.lg,
   },
-  placeholderEmoji: {
-    fontSize: 48,
-  },
   placeholderText: {
     fontSize: 16,
     fontWeight: "700",
@@ -231,10 +235,15 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     padding: spacing.lg,
   },
+  resultTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
   resultTitle: {
     fontSize: 18,
     fontWeight: "800",
     color: colors.text,
+    marginLeft: spacing.sm,
   },
   resultRow: {
     flexDirection: "row",
@@ -254,6 +263,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textMuted,
     marginTop: 2,
+  },
+  confidenceWrap: {
+    marginTop: spacing.lg,
   },
   savedNote: {
     fontSize: 12.5,

@@ -6,6 +6,8 @@ import {
   View,
 } from "react-native";
 
+import { Ionicons } from "@expo/vector-icons";
+
 import { colors, radius, spacing } from "../theme";
 
 type Variant = "primary" | "secondary" | "danger";
@@ -14,7 +16,7 @@ interface Props {
   title: string;
   onPress: () => void;
   variant?: Variant;
-  icon?: string;
+  icon?: keyof typeof Ionicons.glyphMap;
   loading?: boolean;
   disabled?: boolean;
 }
@@ -54,7 +56,9 @@ export default function AppButton({
         <ActivityIndicator color={fg} />
       ) : (
         <View style={styles.row}>
-          {icon ? <Text style={[styles.icon, { color: fg }]}>{icon}</Text> : null}
+          {icon ? (
+            <Ionicons name={icon} size={18} color={fg} style={styles.icon} />
+          ) : null}
           <Text style={[styles.label, { color: fg }]}>{title}</Text>
         </View>
       )}
@@ -82,7 +86,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   icon: {
-    fontSize: 18,
     marginRight: spacing.sm,
   },
   label: {

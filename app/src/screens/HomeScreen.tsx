@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import {
   View,
   Text,
@@ -7,69 +9,138 @@ import {
 } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 
+import { getReports } from "../services/reportService";
 import { colors, radius, shadow, spacing } from "../theme";
 
 export default function HomeScreen({ navigation }: any) {
+  const [stats, setStats] = useState({ total: 0, pending: 0, resolved: 0 });
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", async () => {
+      try {
+        const data = await getReports();
+        setStats({
+          total: data.length,
+          pending: data.filter((r: any) => r.status === "PENDING").length,
+          resolved: data.filter((r: any) => r.status === "RESOLVED").length,
+        });
+      } catch {
+        // offline / backend down — leave stats at zero
+      }
+    });
+    return unsubscribe;
+  }, [navigation]);
+
   return (
     <View style={styles.root}>
       <View style={styles.hero}>
         <SafeAreaView edges={["top"]}>
           <View style={styles.heroInner}>
-            <Text style={styles.heroEmoji}>♻️</Text>
-            <Text style={styles.heroTitle}>CleanCity</Text>
-            <Text style={styles.heroSubtitle}>
-              AI-powered garbage detection & reporting
-            </Text>
+            <View style={styles.brandRow}>
+              <View style={styles.logoCircle}>
+                <Ionicons name="leaf" size={22} color={colors.white} />
+              </View>
+              <View style={{ marginLeft: spacing.md }}>
+                <Text style={styles.heroTitle}>CleanCity</Text>
+                <Text style={styles.heroSubtitle}>AI garbage detection</Text>
+              </View>
+            </View>
+
+            <View style={styles.statStrip}>
+              <HeroStat value={stats.total} label="Reports" />
+              <View style={styles.statDivider} />
+              <HeroStat value={stats.pending} label="Pending" />
+              <View style={styles.statDivider} />
+              <HeroStat value={stats.resolved} label="Resolved" />
+            </View>
           </View>
         </SafeAreaView>
       </View>
 
       <ScrollView contentContainerStyle={styles.body}>
-        <Text style={styles.sectionLabel}>What would you like to do?</Text>
+        <Text style={styles.sectionLabel}>QUICK ACTIONS</Text>
 
-        <TouchableOpacity
-          activeOpacity={0.9}
-          style={styles.actionCard}
+        <ActionCard
+          icon="camera"
+          tint={colors.primary}
+          tintSoft={colors.primarySoft}
+          title="Report Garbage"
+          desc="Capture or upload a photo and let AI detect waste."
           onPress={() => navigation.navigate("Report")}
-        >
-          <View style={[styles.actionIcon, { backgroundColor: colors.primarySoft }]}>
-            <Text style={styles.actionEmoji}>📷</Text>
-          </View>
-          <View style={styles.actionTextWrap}>
-            <Text style={styles.actionTitle}>Report Garbage</Text>
-            <Text style={styles.actionDesc}>
-              Capture or upload a photo and let AI detect waste.
-            </Text>
-          </View>
-          <Text style={styles.chevron}>›</Text>
-        </TouchableOpacity>
+        />
 
-        <TouchableOpacity
-          activeOpacity={0.9}
-          style={styles.actionCard}
+        <ActionCard
+          icon="list"
+          tint={colors.inProgress}
+          tintSoft={colors.inProgressSoft}
+          title="View Reports"
+          desc="Browse submitted reports and detection results."
           onPress={() => navigation.navigate("Reports")}
-        >
-          <View style={[styles.actionIcon, { backgroundColor: colors.inProgressSoft }]}>
-            <Text style={styles.actionEmoji}>📋</Text>
-          </View>
-          <View style={styles.actionTextWrap}>
-            <Text style={styles.actionTitle}>View Reports</Text>
-            <Text style={styles.actionDesc}>
-              Browse submitted reports and their detection results.
-            </Text>
-          </View>
-          <Text style={styles.chevron}>›</Text>
-        </TouchableOpacity>
+        />
 
         <View style={styles.tipCard}>
           <Text style={styles.tipTitle}>How it works</Text>
-          <Text style={styles.tipStep}>1.  Take a photo of accumulated garbage</Text>
-          <Text style={styles.tipStep}>2.  We tag it with your GPS location</Text>
-          <Text style={styles.tipStep}>3.  AI detects & marks the waste</Text>
-          <Text style={styles.tipStep}>4.  Track the report status to resolution</Text>
+          <TipStep icon="camera-outline" text="Take a photo of accumulated garbage" />
+          <TipStep icon="location-outline" text="We tag it with your GPS location" />
+          <TipStep icon="scan-outline" text="AI detects & marks the waste" />
+          <TipStep icon="checkmark-done-outline" text="Track the report to resolution" />
         </View>
       </ScrollView>
+    </View>
+  );
+}
+
+function HeroStat({ value, label }: { value: number; label: string }) {
+  return (
+    <View style={styles.heroStat}>
+      <Text style={styles.heroStatValue}>{value}</Text>
+      <Text style={styles.heroStatLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function ActionCard({
+  icon,
+  tint,
+  tintSoft,
+  title,
+  desc,
+  onPress,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  tint: string;
+  tintSoft: string;
+  title: string;
+  desc: string;
+  onPress: () => void;
+}) {
+  return (
+    <TouchableOpacity activeOpacity={0.9} style={styles.actionCard} onPress={onPress}>
+      <View style={[styles.actionIcon, { backgroundColor: tintSoft }]}>
+        <Ionicons name={icon} size={24} color={tint} />
+      </View>
+      <View style={styles.actionTextWrap}>
+        <Text style={styles.actionTitle}>{title}</Text>
+        <Text style={styles.actionDesc}>{desc}</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={22} color={colors.textMuted} />
+    </TouchableOpacity>
+  );
+}
+
+function TipStep({
+  icon,
+  text,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  text: string;
+}) {
+  return (
+    <View style={styles.tipStep}>
+      <Ionicons name={icon} size={18} color={colors.primaryDark} />
+      <Text style={styles.tipStepText}>{text}</Text>
     </View>
   );
 }
@@ -87,31 +158,65 @@ const styles = StyleSheet.create({
   heroInner: {
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.lg,
-    paddingBottom: spacing.xxl,
+    paddingBottom: spacing.xl,
   },
-  heroEmoji: {
-    fontSize: 40,
+  brandRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  logoCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.pill,
+    backgroundColor: "rgba(255,255,255,0.18)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   heroTitle: {
-    fontSize: 30,
+    fontSize: 24,
     fontWeight: "800",
     color: colors.white,
-    marginTop: spacing.sm,
   },
   heroSubtitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: colors.primarySoft,
-    marginTop: spacing.xs,
+    marginTop: 1,
+  },
+  statStrip: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.14)",
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
+    marginTop: spacing.xl,
+  },
+  heroStat: {
+    flex: 1,
+    alignItems: "center",
+  },
+  heroStatValue: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: colors.white,
+  },
+  heroStatLabel: {
+    fontSize: 11,
+    color: colors.primarySoft,
+    marginTop: 1,
+  },
+  statDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: "rgba(255,255,255,0.25)",
   },
   body: {
     padding: spacing.lg,
   },
   sectionLabel: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "700",
     color: colors.textMuted,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
     marginBottom: spacing.md,
   },
   actionCard: {
@@ -130,9 +235,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  actionEmoji: {
-    fontSize: 24,
-  },
   actionTextWrap: {
     flex: 1,
     marginLeft: spacing.lg,
@@ -147,11 +249,6 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginTop: 2,
   },
-  chevron: {
-    fontSize: 28,
-    color: colors.textMuted,
-    marginLeft: spacing.sm,
-  },
   tipCard: {
     backgroundColor: colors.primarySoft,
     borderRadius: radius.lg,
@@ -162,11 +259,16 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "800",
     color: colors.primaryDark,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
   tipStep: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: spacing.sm,
+  },
+  tipStepText: {
     fontSize: 13.5,
     color: colors.primaryDark,
-    marginTop: spacing.xs,
+    marginLeft: spacing.sm,
   },
 });
